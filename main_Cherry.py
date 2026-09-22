@@ -6,6 +6,7 @@ import numpy as np
 import statistics
 from scipy import stats
 import pandas as pd
+from sklearn.linear_model import LinearRegression
 
 
 filename = "Metadata and Protein Data for Module 1.csv"
@@ -75,11 +76,66 @@ for patient in Patient.all_patients: # Store the age at death and ABeta42 values
     ages_at_death.append(patient.age_at_death)
     all_abeta42.append(patient.abeta42)
 
+t_stat, p_value = stats.ttest_ind(female_abeta42, male_abeta42)
+print(f"t-statistic: {t_stat:.2f}")
+print(f"p-value: {p_value:.4f}")
+if p_value < 0.05:
+    print("There is a statistically significant difference between female and male ABeta42 levels.")
+else:
+    print("There is no statistically significant difference between female and male ABeta42 levels.")
+
+ages_at_death_array = np.array(ages_at_death).reshape(-1, 1)
+
+model = LinearRegression()
+model.fit(ages_at_death_array, all_abeta42)
+
+predicted_abeta42 = model.predict(ages_at_death_array)
+
+slope = model.coef_[0]
+intercept = model.intercept_
+r_squared = model.score(ages_at_death_array, all_abeta42)
+
+print(f"\nRegression slope: {slope:.2f}")
+print(f"Regression intercept: {intercept:.2f}")
+print(f"R-squared value: {r_squared:.4f}")
+
 plt.figure(figsize=(7, 5))
-plt.scatter(ages_at_death, all_abeta42, color="blue", alpha=0.7)
+
+plt.scatter(
+    ages_at_death,
+    all_abeta42,
+    color="blue",
+    alpha=0.7,
+    label="Patients"
+)
+
+plt.plot(
+    ages_at_death,
+    predicted_abeta42,
+    color="red",
+    linewidth=2,
+    label="Linear Regression"
+)
+
+regression_text = (
+    f"y = {slope:.2f}x + {intercept:.2f}\n"
+    f"R² = {r_squared:.4f}"
+)
+
+plt.text(
+    0.05,
+    0.95,
+    regression_text,
+    transform=plt.gca().transAxes,
+    fontsize=11,
+    verticalalignment="top",
+    bbox=dict(facecolor="white", edgecolor="black", alpha=0.8)
+)
+
 plt.title("ABeta42 Level vs. Age at Death")
 plt.xlabel("Age at Death (years)")
 plt.ylabel("ABeta42 (pg/ug)")
+plt.legend()
 plt.tight_layout()
 plt.savefig("Cherry_scatter_plot.png", dpi=300)
 plt.show()
