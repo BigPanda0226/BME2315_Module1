@@ -6,12 +6,13 @@ class Patient:
     all_patients = [] # List to store all Patient objects.
 
     # The __init__ method initializes a Patient object with the provided attributes and appends it to the all_patients list.
-    def __init__(self, donor_id: str, age_at_death: float, sex: str, apoe_genotype: str, cognitive_status: str, abeta40: float, abeta42: float, ttau: float, ptau: float):
+    def __init__(self, donor_id: str, age_at_death: float, sex: str, apoe_genotype: str, cognitive_status: str, head_injury: str, abeta40: float, abeta42: float, ttau: float, ptau: float):
         self.donor_id = donor_id
         self.age_at_death = age_at_death
         self.sex = sex
         self.apoe_genotype = apoe_genotype
         self.cognitive_status = cognitive_status
+        self.head_injury = head_injury
         self.abeta40 = abeta40
         self.abeta42 = abeta42
         self.ttau = ttau
@@ -33,18 +34,21 @@ class Patient:
             reader = csv.DictReader(f)
 
             for row in reader:
-                Patient(donor_id=row["Donor ID"], age_at_death=float(row["Age at Death"]), sex=row["Sex"], apoe_genotype=row["APOE Genotype"], cognitive_status=row["Cognitive Status"], abeta40=float(row["ABeta40 pg/ug"]), abeta42=float(row["ABeta42 pg/ug"]), ttau=float(row["tTAU pg/ug"]), ptau=float(row["pTAU pg/ug"]))
+                Patient(donor_id=row["Donor ID"], age_at_death=float(row["Age at Death"]), sex=row["Sex"], apoe_genotype=row["APOE Genotype"], cognitive_status=row["Cognitive Status"], head_injury=row["Known head injury"] if row["Known head injury"] != "" else None, abeta40=float(row["ABeta40 pg/ug"]), abeta42=float(row["ABeta42 pg/ug"]), ttau=float(row["tTAU pg/ug"]), ptau=float(row["pTAU pg/ug"]))
 
-    @classmethod # Filters patients by sex and/or cognitive status.
-    def filter(cls, patient_list, sex="any", cognitive_status="any"):
+    
+    @classmethod # Filters patients by sex, cognitive status, and/or head injury history.
+    def filter(cls, patient_list, sex="any", cognitive_status="any", head_injury="any"):
         filtered_patients = []
 
-        for patient in patient_list: # Check if the patient's sex and cognitive status match the specified criteria. If either criterion is set to "any", it will match all patients for that attribute.
+        for patient in patient_list:
             sex_matches = sex == "any" or patient.sex == sex
             status_matches = (cognitive_status == "any" or
-                              patient.cognitive_status == cognitive_status)
+                            patient.cognitive_status == cognitive_status)
+            head_injury_matches = (head_injury == "any" or
+                                patient.head_injury == head_injury)
 
-            if sex_matches and status_matches:
+            if sex_matches and status_matches and head_injury_matches:
                 filtered_patients.append(patient)
 
         return filtered_patients

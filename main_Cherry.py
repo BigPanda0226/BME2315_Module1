@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 
 
-filename = "Metadata and Protein Data for Module 1.csv"
+filename = "Module 1/BME2315_Module1/Metadata and Protein Data for Module 1.csv"
 
 Patient.instantiate_from_csv(filename) # Create all patient objects from the CSV file.
 
@@ -33,6 +33,10 @@ male_dementia_patients = Patient.filter(Patient.all_patients, sex="Male", cognit
 female_abeta42 = [] # Store ABeta42 values for female and male patients with dementia.
 male_abeta42 = []
 
+print("Number of patients loaded:", len(Patient.all_patients))
+print("Unique sex values:", set(repr(p.sex) for p in Patient.all_patients))
+print("Unique cognitive status values:", set(repr(p.cognitive_status) for p in Patient.all_patients))
+
 for patient in female_dementia_patients: # Store ABeta42 values for female and male patients with dementia.
     female_abeta42.append(patient.abeta42)
 
@@ -54,6 +58,10 @@ abeta42_means = [female_mean, male_mean]
 abeta42_stdevs = [female_stdev, male_stdev]
 yerr = [np.zeros(len(abeta42_means)), abeta42_stdevs]
 
+t_stat, p_value = stats.ttest_ind(female_abeta42, male_abeta42) # Run a t-test comparing female vs male ABeta42 levels.
+print(f"t-statistic: {t_stat:.2f}")
+print(f"p-value: {p_value:.4f}")
+
 plt.figure(figsize=(7, 5)) # Create a new figure with the specified size, then plot a bar graph with error bars representing the standard deviation for each sex. The bars are colored purple for females and green for males. The graph is titled and labeled appropriately, and the layout is adjusted to fit everything neatly. Finally, the graph is saved as a PNG file and displayed.
 plt.bar(
     sex_labels,
@@ -61,6 +69,23 @@ plt.bar(
     yerr=yerr,
     capsize=10,
     color=["purple", "green"]
+
+    
+)
+
+stats_text = (                                       # build the text that will show the t-stat and p-value
+    f"t = {t_stat:.2f}\n"
+    f"p = {p_value:.4f}"
+    )
+plt.text(
+    0.95,
+    0.95,
+    stats_text,
+    transform=plt.gca().transAxes,
+    fontsize=11,
+    verticalalignment="top",
+    horizontalalignment="right",
+    bbox=dict(facecolor="white", edgecolor="black", alpha=0.8)
 )
 plt.title("Mean ABeta42 Levels in Patients with Dementia")
 plt.xlabel("Sex")
@@ -138,4 +163,62 @@ plt.ylabel("ABeta42 (pg/ug)")
 plt.legend()
 plt.tight_layout()
 plt.savefig("Cherry_scatter_plot.png", dpi=300)
+plt.show()
+
+
+head_injury_yes = Patient.filter(Patient.all_patients, head_injury="Yes")
+head_injury_no = Patient.filter(Patient.all_patients, head_injury="No")
+
+yes_abeta42 = [patient.abeta42 for patient in head_injury_yes]
+no_abeta42 = [patient.abeta42 for patient in head_injury_no]
+
+yes_mean = statistics.mean(yes_abeta42)
+no_mean = statistics.mean(no_abeta42)
+yes_stdev = statistics.stdev(yes_abeta42)
+no_stdev = statistics.stdev(no_abeta42)
+
+print(f"\nHead injury mean ABeta42: {yes_mean:.2f} pg/ug")
+print(f"Head injury ABeta42 standard deviation: {yes_stdev:.2f} pg/ug")
+print(f"No head injury mean ABeta42: {no_mean:.2f} pg/ug")
+print(f"No head injury ABeta42 standard deviation: {no_stdev:.2f} pg/ug")
+
+injury_labels = ["Head Injury", "No Head Injury"]
+injury_means = [yes_mean, no_mean]
+injury_stdevs = [yes_stdev, no_stdev]
+injury_yerr = [np.zeros(len(injury_means)), injury_stdevs]
+
+injury_t_stat, injury_p_value = stats.ttest_ind(yes_abeta42, no_abeta42)
+print(f"t-statistic: {injury_t_stat:.2f}")
+print(f"p-value: {injury_p_value:.4f}")
+
+plt.figure(figsize=(7, 5))
+plt.bar(
+    injury_labels,
+    injury_means,
+    yerr=injury_yerr,
+    capsize=10,
+    color=["darkorange", "steelblue"]
+)
+
+injury_stats_text = (
+    f"t = {injury_t_stat:.2f}\n"
+    f"p = {injury_p_value:.4f}"
+)
+
+plt.text(
+    0.95,
+    0.95,
+    injury_stats_text,
+    transform=plt.gca().transAxes,
+    fontsize=11,
+    verticalalignment="top",
+    horizontalalignment="right",
+    bbox=dict(facecolor="white", edgecolor="black", alpha=0.8)
+)
+
+plt.title("Mean ABeta42 Levels by Head Injury History")
+plt.xlabel("Head Injury History")
+plt.ylabel("Mean ABeta42 (pg/ug)")
+plt.tight_layout()
+plt.savefig("Cherry_head_injury_bar_graph.png", dpi=300)
 plt.show()
