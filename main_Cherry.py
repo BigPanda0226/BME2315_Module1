@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 
 
-filename = "Module 1/BME2315_Module1/Metadata and Protein Data for Module 1.csv"
+filename = "Metadata and Protein Data for Module 1.csv"
 
 Patient.instantiate_from_csv(filename) # Create all patient objects from the CSV file.
 
