@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 
 
-filename = "Metadata and Protein Data for Module 1.csv"
+filename = "Module 1/BME2315_Module1/Metadata and Protein Data for Module 1.csv"
 
 Patient.instantiate_from_csv(filename) # Create all patient objects from the CSV file.
 
@@ -109,33 +109,47 @@ if p_value < 0.05:
 else:
     print("There is no statistically significant difference between female and male ABeta42 levels.")
 
-ages_at_death_array = np.array(ages_at_death).reshape(-1, 1)
+
+all_abeta42_array = np.array(all_abeta42)
+z_scores = np.abs(stats.zscore(all_abeta42_array))
+
+outlier_mask = z_scores > 3
+outlier_indices = np.where(outlier_mask)[0]
+
+print(f"\nNumber of outliers detected (|z| > 3): {len(outlier_indices)}")
+for i in outlier_indices:
+    print(f"Outlier: {Patient.all_patients[i].donor_id}, "
+          f"Age at Death = {ages_at_death[i]}, ABeta42 = {all_abeta42[i]:.2f} pg/ug, z = {z_scores[i]:.2f}")
+
+ages_at_death_clean = [age for i, age in enumerate(ages_at_death) if not outlier_mask[i]]
+all_abeta42_clean = [val for i, val in enumerate(all_abeta42) if not outlier_mask[i]]
+ages_at_death_array = np.array(ages_at_death_clean).reshape(-1, 1)
 
 model = LinearRegression()
-model.fit(ages_at_death_array, all_abeta42)
+model.fit(ages_at_death_array, all_abeta42_clean)
 
 predicted_abeta42 = model.predict(ages_at_death_array)
 
 slope = model.coef_[0]
 intercept = model.intercept_
-r_squared = model.score(ages_at_death_array, all_abeta42)
+r_squared = model.score(ages_at_death_array, all_abeta42_clean)
 
-print(f"\nRegression slope: {slope:.2f}")
-print(f"Regression intercept: {intercept:.2f}")
-print(f"R-squared value: {r_squared:.4f}")
+print(f"\nRegression slope (outliers removed): {slope:.2f}")
+print(f"Regression intercept (outliers removed): {intercept:.2f}")
+print(f"R-squared value (outliers removed): {r_squared:.4f}")
 
 plt.figure(figsize=(7, 5))
 
 plt.scatter(
-    ages_at_death,
-    all_abeta42,
+    ages_at_death_clean,
+    all_abeta42_clean,
     color="blue",
     alpha=0.7,
     label="Patients"
 )
 
 plt.plot(
-    ages_at_death,
+    ages_at_death_clean,
     predicted_abeta42,
     color="red",
     linewidth=2,
